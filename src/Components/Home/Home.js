@@ -6,7 +6,8 @@ import BrandLogos from './BrandLogos/BrandLogos';
 import ProvideServices from './ProvideServices/ProvideServices';
 import OurWorks from './OurWorks/OurWorks';
 import Footer from './Footer/Footer';
-import Review from './Review/Review';
+import UserReview from './UserReview/UserReview';
+
 
 
 
@@ -29,7 +30,7 @@ const Home = () => {
                 <OurWorks></OurWorks>
             </div>
             <div className="container ">
-              <Review></Review>
+              <UserReview></UserReview>
             </div>
             <div className="container footer-bg">
                 <Footer></Footer>

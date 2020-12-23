@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import firebase from "firebase/app";
-import "firebase/auth";
-import firebaseConfig from './firebase.config';
+
+
+import { googleSignIn, initializeFirebaseLogin } from './LoginManager';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import google from '../../images/googleLogo.png';
 import logo from '../../images/logos/logo.png';
@@ -11,38 +11,47 @@ import { UserContext } from './../../App';
 
 const Login = () => {
 
-    const [loggedInUser, setLoggedInUser] = useContext(UserContext);
+    initializeFirebaseLogin();
+    const [loggedInUser, setLoggedInUser] = useContext(UserContext); //------- global logged in user
     const history = useHistory();
     const location = useLocation();
-    const { from } = location.state || { from: { pathname: "/" } };
+    let { from } = location.state || { from: { pathname: "/" } }
 
-    if (firebase.apps.length === 0) {
-        firebase.initializeApp(firebaseConfig);
+    if(loggedInUser.email !== ''){
+        history.replace(from)
     }
 
 
-    const handleGoogleSignIn = () => {
-      var provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider).then(function (result) {
-        const { displayName, email } = result.user;
-        const signedInUser = { name: displayName, email }
-        setLoggedInUser(signedInUser);
-        storeAuthToken();
-      }).catch(function (error) {
-        const errorMessage = error.message;
-        console.log(errorMessage);
-      });
-    }
-  
-    const storeAuthToken = () => {
-      firebase.auth().currentUser.getIdToken(/* forceRefresh */ true)
-        .then(function (idToken) {
-          sessionStorage.setItem('token', idToken);
-          history.replace(from);
-        }).catch(function (error) {
-          // Handle error
-        });
-    }
+    const whoAreYou=(res)=>{
+      fetch(`http://localhost:4000/checkAdminOrNot` , {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({email: res.email})
+      })
+          .then(res => res.json())
+          .then(data => {
+              console.log(data)
+              if (data.person === 'admin') {
+                  res.access = 'admin';
+                  window.alert("Welcome Mr. Admin")
+              }else{
+                  res.access = 'user'
+              }
+              setLoggedInUser(res)
+          })
+  }
+
+  const handleResponse = (res, redirect) => { //---------------- Handle response from firebase
+          whoAreYou(res);
+          redirect && history.replace(from);
+  }
+
+  const handleGoogleSignIn = () => {
+      googleSignIn()
+          .then(res => {
+              res && handleResponse(res, true);
+          })
+  }
     return (
         <div>
         <div className="login d-flex justify-content-center">
@@ -53,15 +62,15 @@ const Login = () => {
             </div>
         </div>
 
-        <div className="d-flex justify-content-center align-items-center my-5" style={{height:'300px'}}>
+        <div className="d-flex justify-content-center align-items-center my-5" style={{height:'200px'}}>
             <div className="card mt-5 p-5 d-flex justify-content-center align-items-center" >
                 <div className="card-body ">
                     <h3>Login With</h3>
                 </div>
-                <div className="social-login px-3 py-2 ">
+                <div className="social-login px-4 py-3 ">
                     <button className="button "  onClick={handleGoogleSignIn}>
                         <img src={google} height="25" alt=""  /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            Continue with 
+                            Continue with  google
                         </button>
                 </div>
                 <br/>
